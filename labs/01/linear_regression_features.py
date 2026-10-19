@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# aa94a035-e929-11e9-9ce9-00505601122b 342b7533-e5d8-11e9-9ce9-00505601122b 5cbfb4bf-8474-4193-b7c1-61fec099ce08
+
 import argparse
 
 import numpy as np
@@ -26,25 +28,27 @@ def main(args: argparse.Namespace) -> list[float]:
     for order in range(1, args.range + 1):
         # TODO: Create features `(x^1, x^2, ..., x^order)`, preferably in this ordering.
         # Note that you can just append `x^order` to the features from the previous iteration.
-        ...
+        features = np.power.outer(xs, np.arange(1, order + 1))
+
 
         # TODO: Split the data into a train set and a test set.
         # Use `sklearn.model_selection.train_test_split` method call, passing
         # arguments `test_size=args.test_size, random_state=args.seed`.
-        ...
+        train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(features, ys, test_size=args.test_size, random_state=args.seed)
 
         # TODO: Fit a linear regression model `sklearn.linear_model.LinearRegression(tol=1e-15)`
         # on the train set using the `fit` method. We use a stricter tolerance `tol=1e-15`
         # as the default tolerance is not sufficient when using features of higher order.
-        model = ...
+        model = sklearn.linear_model.LinearRegression(tol=1e-15) # pyright: ignore[reportCallIssue]
+        model.fit(train_data, train_target)
 
         # TODO: Predict targets on the test set using the `predict` method of the trained model.
-        ...
+        predictions = model.predict(test_data)
 
         # TODO: Compute root mean square error on the test set predictions.
         # You can either do it manually, or you can look at the metrics offered
         # by the `sklearn.metrics` module.
-        rmse = ...
+        rmse = np.sqrt(np.mean(np.square(predictions - test_target)))
 
         rmses.append(rmse)
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# aa94a035-e929-11e9-9ce9-00505601122b 342b7533-e5d8-11e9-9ce9-00505601122b 5cbfb4bf-8474-4193-b7c1-61fec099ce08
+
 import argparse
 
 import numpy as np
@@ -24,22 +26,23 @@ def main(args: argparse.Namespace) -> float:
 
     # TODO: Append a constant feature with value 1 to the end of all input data.
     # Then we do not need to explicitly represent bias - it becomes the last weight.
-    ...
+    dataset.data = np.hstack([dataset.data, np.ones((dataset.data.shape[0], 1))])
 
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
-    ...
+    train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(dataset.data, dataset.target, test_size=args.test_size, random_state=args.seed)
 
     # TODO: Solve the linear regression using the algorithm from the lecture,
     # explicitly computing the matrix inverse (using `np.linalg.inv`).
-    ...
+    train_data_transpose = np.transpose(train_data)
+    weights = np.linalg.inv(train_data_transpose @ train_data) @ train_data_transpose @ train_target
 
     # TODO: Predict target values on the test set.
-    ...
+    test_predictions = test_data @ weights
 
     # TODO: Manually compute root mean square error on the test set predictions.
-    rmse = ...
+    rmse = np.sqrt(np.mean(np.power(test_predictions - test_target, 2)))
 
     return rmse
 

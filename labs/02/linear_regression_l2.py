@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# aa94a035-e929-11e9-9ce9-00505601122b 342b7533-e5d8-11e9-9ce9-00505601122b 5cbfb4bf-8474-4193-b7c1-61fec099ce08
 import argparse
 
 import numpy as np
@@ -23,14 +24,29 @@ def main(args: argparse.Namespace) -> tuple[float, float]:
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
+    train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(
+        dataset.data, dataset.target, test_size=args.test_size, random_state=args.seed
+    )
 
     lambdas = np.geomspace(0.01, 10, num=500)
-    # TODO: Using `sklearn.linear_model.Ridge`, fit the train set using
+    # TODO: Using `sklearn.linear_model.Ridge`(it creates a model), fit the train set using
     # L2 regularization, employing the above defined lambdas.
     # For every model, compute the root mean squared error and return the
     # lambda producing lowest RMSE and the corresponding RMSE.
-    best_lambda = ...
-    best_rmse = ...
+    rmses = []
+
+    for _lambda in lambdas:
+        model = sklearn.linear_model.Ridge(alpha=_lambda)
+        model.fit(train_data, train_target)
+        prediction = model.predict(test_data)
+
+        rmse = np.sqrt(sklearn.metrics.mean_squared_error(test_target, prediction))
+
+        rmses.append(rmse)
+
+    lambda_index = np.argmin(rmses)
+    best_lambda = lambdas[lambda_index]
+    best_rmse = rmses[lambda_index]
 
     if args.plot:
         # This block is not required to pass in ReCodEx; however, it is useful

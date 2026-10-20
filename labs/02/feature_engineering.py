@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# aa94a035-e929-11e9-9ce9-00505601122b 342b7533-e5d8-11e9-9ce9-00505601122b 5cbfb4bf-8474-4193-b7c1-61fec099ce08
 import argparse
 
 import numpy as np
@@ -23,6 +24,8 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
+    train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(dataset.data, dataset.target, test_size=args.test_size, random_state=args.seed)
+
 
     # TODO: Process the input columns in the following way:
     #
@@ -41,24 +44,41 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
     # and then the real-valued features. To process different dataset columns
     # differently, you can use `sklearn.compose.ColumnTransformer`.
 
+    is_integer = np.all(train_data == np.round(train_data), axis=0)
+    categorical_columns = np.flatnonzero(is_integer)
+    real_columns = np.flatnonzero(~is_integer)
+
+
     # TODO: To the current features, append polynomial features of order 2.
     # If the input values are `[a, b, c, d]`, you should append
     # `[a^2, ab, ac, ad, b^2, bc, bd, c^2, cd, d^2]`. You can generate such polynomial
     # features either manually, or you can employ the provided transformer
-    #   sklearn.preprocessing.PolynomialFeatures(2, include_bias=False)
+    # sklearn.preprocessing.PolynomialFeatures(2, include_bias=False)
     # which appends such polynomial features of order 2 to the given features.
+
+    column_transformer = sklearn.compose.ColumnTransformer([
+        ("categorical", sklearn.preprocessing.OneHotEncoder(sparse_output=False, handle_unknown="ignore"), categorical_columns),
+        ("real", sklearn.preprocessing.StandardScaler(), real_columns),
+    ])
+
 
     # TODO: You can wrap all the feature processing steps into one transformer
     # by using `sklearn.pipeline.Pipeline`. Although not strictly needed, it is
     # usually comfortable.
+
+    pipeline = sklearn.pipeline.Pipeline([
+        ("columns", column_transformer),
+        ("polynomial", sklearn.preprocessing.PolynomialFeatures(2, include_bias=False)),
+    ])
 
     # TODO: Fit the feature preprocessing steps (the composed pipeline with all of
     # them; or the individual steps, if you prefer) on the training data (using `fit`).
     # Then transform the training data into `train_data` (with a `transform` call;
     # however, you can combine the two methods into a single `fit_transform` call).
     # Finally, transform testing data to `test_data`.
-    train_data = ...
-    test_data = ...
+
+    train_data = pipeline.fit_transform(train_data)
+    test_data = pipeline.transform(test_data)
 
     return train_data[:5], test_data[:5]
 

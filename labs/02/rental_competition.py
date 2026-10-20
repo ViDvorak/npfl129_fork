@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# aa94a035-e929-11e9-9ce9-00505601122b 342b7533-e5d8-11e9-9ce9-00505601122b 5cbfb4bf-8474-4193-b7c1-61fec099ce08
+
 import argparse
 import lzma
 import os
@@ -9,6 +11,9 @@ import urllib.request
 
 import numpy as np
 import numpy.typing as npt
+from sklearn.linear_model import RidgeCV
+from sklearn.model_selection import KFold, cross_val_predict
+from sklearn.metrics import root_mean_squared_error
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
@@ -17,6 +22,7 @@ parser.add_argument("--recodex", default=False, action="store_true", help="Runni
 parser.add_argument("--seed", default=42, type=int, help="Random seed")
 # For these and any other arguments you add, ReCodEx will keep your default value.
 parser.add_argument("--model_path", default="rental_competition.model", type=str, help="Model path")
+parser.add_argument("--evaluate", default=False, action="store_true", help="Evaluate using cross-validation")
 
 
 class Dataset:
@@ -51,6 +57,23 @@ class Dataset:
         for key, value in dataset.items():
             setattr(self, key, value)
 
+def make_features(X):
+    X = np.asarray(X)
+
+    year = X[:, 1:2]
+    hour = np.eye(24)[X[:, 3].astype(int)]
+    working = X[:, 6:7]
+    temp = X[:, 8:9]
+
+    return np.hstack([
+        X,
+        hour,
+        hour * working,
+        hour * year,
+        hour * temp,
+        temp ** 2,
+        temp ** 3,
+    ])
 
 def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
     if args.predict is None:
@@ -59,7 +82,13 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         train = Dataset()
 
         # TODO: Train a model on the given dataset and store it in `model`.
-        model = ...
+        X = make_features(train.data)
+        model = RidgeCV(alphas=np.logspace(-2, 3, 16))
+        if args.evaluate:
+            cv = KFold(n_splits=5, shuffle=True, random_state=args.seed)
+            predictions = cross_val_predict(model, X, train.target, cv=cv)
+            print(f"Cross-validation RMSE: {root_mean_squared_error(train.target, predictions):.2f}", file=sys.stderr)
+        model.fit(X, train.target)
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
@@ -73,7 +102,7 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
             model = pickle.load(model_file)
 
         # TODO: Generate `predictions` with the test set predictions.
-        predictions = ...
+        predictions = np.maximum(0, model.predict(make_features(test.data)))
 
         return predictions
 

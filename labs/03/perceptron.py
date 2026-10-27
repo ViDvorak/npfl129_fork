@@ -44,9 +44,6 @@ def main(args: argparse.Namespace) -> np.ndarray:
 
     data = np.hstack((data, np.ones( (data.shape[0], 1) ) ))
 
-    print("data size:", data.shape)
-    print("target size:", target.shape)
-
     # Generate initial perceptron weights.
     weights = np.zeros(data.shape[1])
 
@@ -62,14 +59,15 @@ def main(args: argparse.Namespace) -> np.ndarray:
         
         has_changed = False
         for input, expected_result in zip (data[permutation], target[permutation]):
-            print("input:", input)
             # compute prediction
             potential = sum( weights * input )
 
-            if potential >= 0:
+            if potential > 0:
                 prediction = 1
-            else:
+            elif potential < 0:
                 prediction = -1
+            else:
+                prediction = 0
             
             # adjust the wights
             
